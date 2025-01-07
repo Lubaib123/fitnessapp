@@ -7,8 +7,8 @@ class AppPalette {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      const Color(0xff23b6e6), // Gradient start color
-      const Color(0xff02d39a), // Gradient end color
+      Color(0xff23b6e6), // Gradient start color
+      Color(0xff02d39a), // Gradient end color
     ],
     stops: [0, 0.93],
   );

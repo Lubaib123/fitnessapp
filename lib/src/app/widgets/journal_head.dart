@@ -1,7 +1,9 @@
 import 'package:fitapp/gen/assets.gen.dart';
 import 'package:fitapp/src/app/themes/app_typography.dart';
+import 'package:fitapp/src/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class DarkenedImageWithText extends StatefulWidget {
@@ -10,13 +12,14 @@ class DarkenedImageWithText extends StatefulWidget {
   final double? height;
 
   const DarkenedImageWithText({
-    Key? key,
+    super.key,
     required this.imageUrl,
     required this.text,
     this.height,
-  }) : super(key: key);
+  });
 
   @override
+  // ignore: library_private_types_in_public_api
   _DarkenedImageWithTextState createState() => _DarkenedImageWithTextState();
 }
 
@@ -63,7 +66,8 @@ class _DarkenedImageWithTextState extends State<DarkenedImageWithText>
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5), // Darken the image
+              color: Colors.black.withAlpha((0.5 * 255).toInt()),
+              // Darken the image
             ),
           ),
           Column(
@@ -77,8 +81,8 @@ class _DarkenedImageWithTextState extends State<DarkenedImageWithText>
                     widget.text,
                     textAlign: TextAlign.center,
                     style: AppTypography().heading1.copyWith(
-                      color: CupertinoColors.white,
-                    ),
+                          color: CupertinoColors.white,
+                        ),
                   ),
                 ),
               ),
@@ -89,25 +93,32 @@ class _DarkenedImageWithTextState extends State<DarkenedImageWithText>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SvgPicture.asset(Assets.icons.footwhite),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: " 7200", // The number part
-                          style: AppTypography().heading1.copyWith(
-                            color: CupertinoColors.white,
-                            fontSize: 42,
+                  BlocBuilder<DashboardBloc, DashboardState>(builder: (
+                    context,
+                    state,
+                  ) {
+                    return RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: state is DashboardLoaded
+                                ? (state.healthdata.steps.toString())
+                                : '0',
+                            style: AppTypography().heading1.copyWith(
+                                  color: CupertinoColors.white,
+                                  fontSize: 42,
+                                ),
                           ),
-                        ),
-                        TextSpan(
-                          text: " steps", // The "steps" part
-                          style: AppTypography().body1.copyWith(
-                            color: CupertinoColors.white,
+                          TextSpan(
+                            text: " steps", // The "steps" part
+                            style: AppTypography().body1.copyWith(
+                                  color: CupertinoColors.white,
+                                ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
+                        ],
+                      ),
+                    );
+                  }),
                 ],
               ),
             ],

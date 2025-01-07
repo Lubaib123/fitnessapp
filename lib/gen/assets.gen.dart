@@ -64,6 +64,19 @@ class $AssetsIconsGen {
       ];
 }
 
+class $AssetsJsonGen {
+  const $AssetsJsonGen();
+
+  /// File path: assets/json/motivational_messages.json
+  String get motivationalMessages => 'assets/json/motivational_messages.json';
+
+  /// File path: assets/json/wearable_data.json
+  String get wearableData => 'assets/json/wearable_data.json';
+
+  /// List of all assets
+  List<String> get values => [motivationalMessages, wearableData];
+}
+
 class $AssetsLottieGen {
   const $AssetsLottieGen();
 
@@ -92,6 +105,7 @@ class Assets {
   Assets._();
 
   static const $AssetsIconsGen icons = $AssetsIconsGen();
+  static const $AssetsJsonGen json = $AssetsJsonGen();
   static const $AssetsLottieGen lottie = $AssetsLottieGen();
   static const $AssetsVediosGen vedios = $AssetsVediosGen();
 }

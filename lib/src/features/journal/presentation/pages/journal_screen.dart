@@ -1,16 +1,19 @@
 import 'dart:math';
 import 'dart:ui';
+import 'package:fitapp/src/app/core/dependancy-injection/injection_container.dart';
 import 'package:fitapp/src/app/resources/boxes.dart';
 import 'package:fitapp/src/app/resources/emoji_data.dart';
 import 'package:fitapp/src/app/themes/app_button.dart';
-import 'package:fitapp/src/app/themes/app_palette.dart';
 import 'package:fitapp/src/app/themes/app_typography.dart';
 import 'package:fitapp/src/app/themes/textfield_custom.dart';
+import 'package:fitapp/src/app/widgets/emoji_shower.dart';
 import 'package:fitapp/src/app/widgets/journal_head.dart';
 import 'package:fitapp/src/features/journal/data/models/journal_model_class.dart';
+import 'package:fitapp/src/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class JournalScreen extends StatefulWidget {
   const JournalScreen({super.key});
@@ -21,6 +24,7 @@ class JournalScreen extends StatefulWidget {
 
 class _JournalScreenState extends State<JournalScreen>
     with SingleTickerProviderStateMixin {
+  late OnboardingBloc onboardingBloc;
   final PageController pageController = PageController(
     viewportFraction: 0.4,
     initialPage: 2,
@@ -49,12 +53,11 @@ class _JournalScreenState extends State<JournalScreen>
     String? moodname,
     DateTime? todaysDate,
   }) async {
-    final journal =
-        JournalModelClass()
-          ..journalText = journalText ?? ""
-          ..moodid = selectedMood!.id
-          ..name = selectedMood!.name
-          ..jouralDate = todaysDate!;
+    final journal = JournalModelClass()
+      ..journalText = journalText ?? ""
+      ..moodid = selectedMood!.id
+      ..name = selectedMood!.name
+      ..jouralDate = todaysDate!;
     final box = Boxes.getJournal();
     box.add(journal);
   }
@@ -90,7 +93,6 @@ class _JournalScreenState extends State<JournalScreen>
                 onPressed: () {
                   Navigator.of(context).pop(); // Close the dialog
                 },
-                child: Text("Close"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal, // Button color
                   shape: RoundedRectangleBorder(
@@ -98,6 +100,7 @@ class _JournalScreenState extends State<JournalScreen>
                   ),
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 ),
+                child: Text("Close"),
               ),
             ],
           ),
@@ -110,6 +113,8 @@ class _JournalScreenState extends State<JournalScreen>
   void initState() {
     super.initState();
 
+    onboardingBloc = sl<OnboardingBloc>();
+    onboardingBloc.add(GetMotivationalMessagesEvent());
     focusedemoiji = emojis[2];
 
     _animationController = AnimationController(
@@ -144,19 +149,32 @@ class _JournalScreenState extends State<JournalScreen>
 
   @override
   Widget build(BuildContext context) {
-    print("Building JournalScreen");
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverAppBar(
-            expandedHeight: 220.0,
-            flexibleSpace: FlexibleSpaceBar(
-              background: DarkenedImageWithText(
-                imageUrl:
-                    'https://images.pexels.com/photos/2924491/pexels-photo-2924491.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
-                text: "You're doing great! Keep it up!",
-              ),
-            ),
+          BlocBuilder<OnboardingBloc, OnboardingState>(
+            builder: (context, state) {
+              if (state is OnboardingLoaded) {
+                return SliverAppBar(
+                  expandedHeight: 220.0,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: DarkenedImageWithText(
+                        imageUrl:
+                            'https://images.pexels.com/photos/2924491/pexels-photo-2924491.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                        text: state.messages.message),
+                  ),
+                );
+              }
+              return SliverAppBar(
+                expandedHeight: 220.0,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: DarkenedImageWithText(
+                      imageUrl:
+                          'https://images.pexels.com/photos/2924491/pexels-photo-2924491.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1',
+                      text: "......."),
+                ),
+              );
+            },
           ),
           SliverList(
             delegate: SliverChildListDelegate([
@@ -197,14 +215,12 @@ class _JournalScreenState extends State<JournalScreen>
                                 controller: pageController,
                                 itemCount: emojis.length,
                                 itemBuilder: (context, index) {
-                                  print("Building emoji at index: $index");
                                   return AnimatedBuilder(
                                     animation: pageController,
                                     builder: (context, child) {
                                       double value = 0;
                                       if (pageController
-                                          .position
-                                          .haveDimensions) {
+                                          .position.haveDimensions) {
                                         value = pageController.page! - index;
                                         value = (1 - (value.abs() * 0.4)).clamp(
                                           0.8,
@@ -239,7 +255,7 @@ class _JournalScreenState extends State<JournalScreen>
                                       },
                                       child: Column(
                                         children: [
-                                          emojishower(
+                                          Emojishower(
                                             selectedMood: selectedMood,
                                             focusedemoiji: focusedemoiji,
                                             index: index,
@@ -254,15 +270,16 @@ class _JournalScreenState extends State<JournalScreen>
                             Container(
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(16),
-                                color:
-                                    (selectedMood?.id == focusedemoiji?.id)
-                                        ? Colors.teal.withOpacity(0.2)
-                                        : Colors.white.withOpacity(0.2),
+                                color: (selectedMood?.id == focusedemoiji?.id)
+                                    ? Colors.teal.withAlpha((0.2 * 255).toInt())
+                                    : Colors.white
+                                        .withAlpha((0.2 * 255).toInt()),
                                 border: Border.all(
-                                  color:
-                                      (selectedMood?.id == focusedemoiji?.id)
-                                          ? Colors.teal.withOpacity(0.3)
-                                          : Colors.white.withOpacity(0.3),
+                                  color: (selectedMood?.id == focusedemoiji?.id)
+                                      ? Colors.teal
+                                          .withAlpha((0.3 * 255).toInt())
+                                      : Colors.white
+                                          .withAlpha((0.3 * 255).toInt()),
                                   width: 3,
                                 ),
                               ),
@@ -304,9 +321,8 @@ class _JournalScreenState extends State<JournalScreen>
                       SlideTransition(
                         position: _slideAnimation,
                         child: AppButton(
-                          isEnable:
-                              (selectedMood != null &&
-                                  journalText.text.isNotEmpty),
+                          isEnable: (selectedMood != null &&
+                              journalText.text.isNotEmpty),
                           title: "Add Journal",
                           onTap: () {
                             HapticFeedback.mediumImpact();
@@ -321,10 +337,8 @@ class _JournalScreenState extends State<JournalScreen>
                               selectedMood = null;
                               journalText.clear();
                               setState(() {});
+                              // ignore: use_build_context_synchronously
                               showCustomAlertDialog(context);
-                              print(
-                                "Selected Emoji: ID=${selectedEmoji.id}, Name=${selectedEmoji.name}",
-                              );
                             });
                           },
                         ),
@@ -347,46 +361,5 @@ class _JournalScreenState extends State<JournalScreen>
     pageController.dispose();
     _animationController.dispose();
     super.dispose();
-  }
-}
-
-class emojishower extends StatelessWidget {
-  emojishower({
-    super.key,
-    required this.selectedMood,
-    required this.focusedemoiji,
-    required this.index,
-  });
-  int index;
-  final Emoji? selectedMood;
-  final Emoji? focusedemoiji;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 120,
-      width: 120,
-      margin: const EdgeInsets.symmetric(horizontal: 4.0),
-      decoration: BoxDecoration(
-        color:
-            (selectedMood?.id == emojis[index].id)
-                ? null // Set to null because we'll use the gradient instead
-                : (focusedemoiji?.id == emojis[index].id)
-                ? AppPalette.white
-                : Colors.transparent,
-        gradient:
-            (selectedMood?.id == emojis[index].id)
-                ? AppPalette.cardbluegreen
-                : null, // No gradient when the condition is not met
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(color: Colors.white30, blurRadius: 2, offset: Offset(0, 4)),
-        ],
-      ),
-      child: Image.asset(
-        emojis[index].assetPath, // Ensure the asset paths are correct
-        fit: BoxFit.cover,
-      ),
-    );
   }
 }

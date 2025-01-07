@@ -28,8 +28,8 @@ class _AnimatedImageState extends State<AnimatedImage>
   @override
   Widget build(BuildContext context) {
     return SlideTransition(
-      child: Image.asset(widget.imagepath, scale: 3),
       position: _animation,
+      child: Image.asset(widget.imagepath, scale: 3),
     );
   }
 }

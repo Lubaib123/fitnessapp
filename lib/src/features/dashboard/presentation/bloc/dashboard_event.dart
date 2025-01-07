@@ -6,3 +6,8 @@ abstract class DashboardEvent extends Equatable {
   @override
   List<Object> get props => [];
 }
+
+class GetHealthEvent extends DashboardEvent {
+  @override
+  List<Object> get props => [];
+}

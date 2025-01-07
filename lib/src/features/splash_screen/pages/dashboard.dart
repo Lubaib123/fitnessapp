@@ -1,15 +1,8 @@
-import 'dart:convert';
-
 import 'package:fitapp/src/app/themes/app_palette.dart';
 import 'package:fitapp/src/features/dashboard/presentation/pages/dashboard_screen.dart';
 import 'package:fitapp/src/features/journal/presentation/pages/journal_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
-import 'package:hive/hive.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class DashBoardScreen extends StatefulWidget {
   const DashBoardScreen({super.key});
@@ -20,12 +13,6 @@ class DashBoardScreen extends StatefulWidget {
 
 class _DashBoardScreenState extends State<DashBoardScreen> {
   int selectedIndex = 0;
-  @override
-  void initState() {
-    fetchMotivationalMessage();
-
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +38,6 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
               ),
               label: "Dashboard",
             ),
-
             BottomNavigationBarItem(
               icon: Icon(
                 selectedIndex == 1
@@ -65,13 +51,4 @@ class _DashBoardScreenState extends State<DashBoardScreen> {
       ),
     );
   }
-}
-
-Future<String> fetchMotivationalMessage() async {
-  await Future.delayed(Duration(seconds: 2)); // Simulating network delay
-  final String response = await rootBundle.loadString(
-    'assets/motivational_messages.json',
-  );
-  final data = jsonDecode(response);
-  return data['message'];
 }

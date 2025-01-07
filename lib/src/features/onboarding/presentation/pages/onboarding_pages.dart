@@ -1,30 +1,27 @@
-import 'dart:convert';
+import 'dart:developer';
+
 import 'package:fitapp/gen/assets.gen.dart';
 import 'package:fitapp/src/app/themes/app_palette.dart';
 import 'package:fitapp/src/app/themes/app_typography.dart';
+import 'package:fitapp/src/features/onboarding/presentation/bloc/onboarding_bloc.dart';
 import 'package:fitapp/src/features/splash_screen/pages/dashboard.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:video_player/video_player.dart';
-
-// Simulate an API call to fetch motivational message
-Future<String> fetchMotivationalMessage() async {
-  await Future.delayed(Duration(seconds: 2)); // Simulating network delay
-  final String response = await rootBundle.loadString(
-    'assets/motivational_messages.json',
-  );
-  final data = jsonDecode(response);
-  return data['message'];
-}
+import 'package:fitapp/src/app/core/dependancy-injection/injection_container.dart';
 
 class OnboardingScreen extends StatefulWidget {
+  const OnboardingScreen({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _OnboardingScreenState createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen>
     with TickerProviderStateMixin {
+  late OnboardingBloc onboardingBloc;
   final PageController _pageController = PageController();
   int _currentPage = 0; // Track the current page index
   late AnimationController _animationController;
@@ -35,11 +32,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   void initState() {
     super.initState();
+    onboardingBloc = sl<OnboardingBloc>();
+    onboardingBloc.add(GetMotivationalMessagesEvent());
     // Initialize VideoPlayerController with a network URL
     _controller = VideoPlayerController.asset(
-        Assets.vedios.splashVideo, // Replace with your video URL
-      )
-      ..initialize().then((_) {
+      Assets.vedios.splashVideo, // Replace with your video URL
+    )..initialize().then((_) {
         setState(() {});
         _controller.play();
         _controller.setLooping(true); // Loop the video
@@ -98,7 +96,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               : Center(child: CircularProgressIndicator()), // Loading indicator
           Container(
             height: double.infinity, // Tint height
-            color: Colors.black.withOpacity(0.6), // Semi-transparent black tint
+            color: Colors.black.withAlpha((0.6 * 255).toInt()),
+// Semi-transparent black tint
           ),
           // Animated Page View for Onboarding Pages
           AnimatedBuilder(
@@ -126,10 +125,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     image: Assets.icons.appTutorials.keyName,
                   ),
                   // Second Screen: Motivational Message & Visualization
-                  OnboardingPage(
-                    image: Assets.icons.dashboardTutoiral.keyName,
-                    title: "Stay Motivated",
-                    description: "You're doing great! Keep it up!",
+
+                  BlocBuilder<OnboardingBloc, OnboardingState>(
+                    builder: (context, state) {
+                      log('state $state');
+                      if (state is OnboardingLoaded) {
+                        return OnboardingPage(
+                            image: Assets.icons.dashboardTutoiral.keyName,
+                            title: "Stay Motivated",
+                            description: state.messages.message);
+                      }
+                      return Center(
+                        child: CircularProgressIndicator.adaptive(),
+                      );
+                    },
                   ),
                   // Third Screen: Call to action to start journaling
                   OnboardingPage(
@@ -144,45 +153,44 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           _buildProgressIndicator(), // Call the progress indicator method
         ],
       ),
-      bottomNavigationBar:
-          _currentPage == 2
-              ? Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: CupertinoButton(
-                      padding: EdgeInsets.all(8),
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DashBoardScreen(),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        height: 62,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          gradient: AppPalette.tealshade,
-                          borderRadius: BorderRadius.circular(16),
+      bottomNavigationBar: _currentPage == 2
+          ? Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: CupertinoButton(
+                    padding: EdgeInsets.all(8),
+                    onPressed: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DashBoardScreen(),
                         ),
-                        child: Center(
-                          child: Text(
-                            "Start Journaling",
-                            style: AppTypography().heading4.copyWith(
-                              color: Colors.white,
-                            ),
-                          ),
+                      );
+                    },
+                    child: Container(
+                      height: 62,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        gradient: AppPalette.tealshade,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Center(
+                        child: Text(
+                          "Start Journaling",
+                          style: AppTypography().heading4.copyWith(
+                                color: Colors.white,
+                              ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              )
-              : SizedBox.shrink(),
+              ),
+            )
+          : SizedBox.shrink(),
     );
   }
 
@@ -199,10 +207,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             height: _currentPage == index ? 5 : 3, // Highlight current page
             width: 30,
             decoration: BoxDecoration(
-              color:
-                  _currentPage == index
-                      ? Colors.teal
-                      : Colors.white.withOpacity(0.5),
+              color: _currentPage == index
+                  ? Colors.teal
+                  : Colors.white.withAlpha((0.5 * 255).toInt()),
               borderRadius: BorderRadius.circular(2),
             ),
             duration: Duration(milliseconds: 300),
@@ -219,12 +226,14 @@ class OnboardingPage extends StatefulWidget {
   final String? image;
 
   const OnboardingPage({
+    super.key,
     required this.title,
     required this.description,
     this.image,
   });
 
   @override
+  // ignore: library_private_types_in_public_api
   _OnboardingPageState createState() => _OnboardingPageState();
 }
 

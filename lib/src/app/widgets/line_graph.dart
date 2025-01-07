@@ -2,10 +2,11 @@ import 'package:fitapp/gen/assets.gen.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+// ignore: must_be_immutable
 class LineChartWidget extends StatelessWidget {
   final List<FlSpot> chartData;
 
-  LineChartWidget({Key? key, required this.chartData}) : super(key: key);
+  LineChartWidget({super.key, required this.chartData});
 
   @override
   Widget build(BuildContext context) {
@@ -67,10 +68,9 @@ class LineChartWidget extends StatelessWidget {
           belowBarData: BarAreaData(
             show: true,
             gradient: LinearGradient(
-              colors:
-                  gradientColors
-                      .map((color) => color.withOpacity(0.3))
-                      .toList(),
+              colors: gradientColors
+                  .map((color) => color.withAlpha((0.3 * 255).toInt()))
+                  .toList(),
             ),
           ),
         ),
@@ -115,7 +115,6 @@ class LineChartWidget extends StatelessWidget {
   }
 
   Widget leftTitleWidgets(double value, TitleMeta meta) {
-    const style = TextStyle(fontWeight: FontWeight.bold, fontSize: 15);
     String image;
     switch (value.toInt()) {
       case 1:

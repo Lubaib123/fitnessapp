@@ -58,12 +58,11 @@ class _JournalDashboardScreenState extends State<JournalDashboardScreen> {
     }
 
     // Filter out mood IDs 1 (Angry) and 2 (Sad) as they are not considered positive
-    final filteredJournals =
-        journals
-            .where(
-              (journal) => (journal.moodid ?? 0) > 2,
-            ) // Exclude Angry (1) and Sad (2)
-            .toList();
+    final filteredJournals = journals
+        .where(
+          (journal) => (journal.moodid) > 2,
+        ) // Exclude Angry (1) and Sad (2)
+        .toList();
 
     if (filteredJournals.isEmpty) {
       // If no positive mood found, return null or indicate no positive mood
@@ -73,7 +72,7 @@ class _JournalDashboardScreenState extends State<JournalDashboardScreen> {
     // Find the journal entry with the highest moodid (most positive)
     final mostPositiveMoodId = filteredJournals
         .map(
-          (journal) => journal.moodid ?? 0,
+          (journal) => journal.moodid,
         ) // Get all moodids, fallback to 0 if null
         .reduce((a, b) => a > b ? a : b); // Find the highest moodid
 
@@ -90,7 +89,7 @@ class _JournalDashboardScreenState extends State<JournalDashboardScreen> {
 
     return List.generate(recentJournalsReversed.length, (index) {
       final moodid =
-          recentJournalsReversed[index].moodid ?? 0; // Safe fallback for moodid
+          recentJournalsReversed[index].moodid; // Safe fallback for moodid
       log("${(index).toDouble() * 2}-- ${moodid.toDouble()}");
       return FlSpot((index).toDouble() * 2, moodid.toDouble()); // Add +1 to x
     });
@@ -156,7 +155,8 @@ class MoodGraphWrapper extends StatelessWidget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1), // Shadow color with opacity
+            color: Colors.black
+                .withAlpha((0.1 * 255).toInt()), // Shadow color with opacity
             offset: Offset(0, 4), // Position of the shadow
             blurRadius: 6, // Blur radius
             spreadRadius: 1, // Spread radius
